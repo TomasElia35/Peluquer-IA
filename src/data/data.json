@@ -1,0 +1,133 @@
+{
+  "services": [
+    {
+      "id": "s1",
+      "name": "Corte Clásico",
+      "description": "Corte de cabello tradicional con tijera o máquina.",
+      "duration": 30,
+      "price": 15
+    },
+    {
+      "id": "s2",
+      "name": "Corte + Barba",
+      "description": "Corte de cabello y arreglo de barba completo.",
+      "duration": 45,
+      "price": 22
+    },
+    {
+      "id": "s3",
+      "name": "Coloración",
+      "description": "Tinte completo o mechas.",
+      "duration": 120,
+      "price": 50
+    },
+    {
+      "id": "s4",
+      "name": "Tratamiento Capilar",
+      "description": "Hidratación profunda y reparación.",
+      "duration": 60,
+      "price": 35
+    }
+  ],
+  "employees": [
+    {
+      "id": "e1",
+      "name": "Carlos",
+      "lastName": "Gómez",
+      "photo": "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80",
+      "role": "Estilista Senior"
+    },
+    {
+      "id": "e2",
+      "name": "Ana",
+      "lastName": "Martínez",
+      "photo": "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80",
+      "role": "Colorista"
+    },
+    {
+      "id": "e3",
+      "name": "Javier",
+      "lastName": "López",
+      "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80",
+      "role": "Barbero"
+    }
+  ],
+  "products": [
+    {
+      "id": "p1",
+      "name": "Gel Fijador Extra Fuerte",
+      "brand": "StylePro",
+      "stock": 15,
+      "minStock": 5,
+      "price": 12
+    },
+    {
+      "id": "p2",
+      "name": "Champú Anticaspa",
+      "brand": "ClearHair",
+      "stock": 3,
+      "minStock": 10,
+      "price": 18
+    },
+    {
+      "id": "p3",
+      "name": "Cera Mate",
+      "brand": "BarberShop",
+      "stock": 8,
+      "minStock": 5,
+      "price": 14
+    },
+    {
+      "id": "p4",
+      "name": "Tinte Negro Intenso",
+      "brand": "ColorMax",
+      "stock": 2,
+      "minStock": 10,
+      "price": 25
+    }
+  ],
+  "appointments": [
+    {
+      "id": "a1",
+      "clientName": "Juan",
+      "clientLastName": "Pérez",
+      "clientPhone": "1122334455",
+      "clientEmail": "juan@example.com",
+      "serviceId": "s1",
+      "employeeId": "e1",
+      "date": "2026-05-02",
+      "time": "10:00",
+      "status": "Solicitado",
+      "finalAmount": null,
+      "code": "TUR-X8J2"
+    },
+    {
+      "id": "a2",
+      "clientName": "María",
+      "clientLastName": "García",
+      "clientPhone": "5544332211",
+      "clientEmail": "maria@example.com",
+      "serviceId": "s3",
+      "employeeId": "e2",
+      "date": "2026-05-01",
+      "time": "14:30",
+      "status": "Aceptado",
+      "finalAmount": null,
+      "code": "TUR-M9L4"
+    },
+    {
+      "id": "a3",
+      "clientName": "Pedro",
+      "clientLastName": "Rodríguez",
+      "clientPhone": "9988776655",
+      "clientEmail": "pedro@example.com",
+      "serviceId": "s2",
+      "employeeId": "e3",
+      "date": "2026-04-30",
+      "time": "16:00",
+      "status": "Finalizado",
+      "finalAmount": 22,
+      "code": "TUR-P1K7"
+    }
+  ]
+}
