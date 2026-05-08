@@ -78,10 +78,13 @@ const EstadisticasView = () => {
     { name: 'Productos', value: totalProductRevenue }
   ];
 
-  // Employee Performance & Commission Data (Bar Chart)
+  // Employee Performance & Commission Data (Bar Chart) - Current Month
+  const todayDate = new Date();
+  const currentMonth = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0');
+
   const employeeStats = employees.map(emp => {
-    const empAppointments = finalizedAppointments.filter(app => app.employeeId === emp.id);
-    const empSales = productSales.filter(sale => sale.employeeId === emp.id);
+    const empAppointments = finalizedAppointments.filter(app => app.employeeId === emp.id && app.date && app.date.startsWith(currentMonth));
+    const empSales = productSales.filter(sale => sale.employeeId === emp.id && sale.date && sale.date.startsWith(currentMonth));
 
     const empServiceRev = empAppointments.reduce((sum, app) => sum + (app.finalAmount || 0), 0);
     const empProductRev = empSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
@@ -173,7 +176,7 @@ const EstadisticasView = () => {
         </div>
 
         <div className="glass p-6 rounded-2xl">
-          <h3 className="text-xl font-bold mb-6 text-center">Rendimiento y Comisiones por Empleado</h3>
+          <h3 className="text-xl font-bold mb-6 text-center">Rendimiento y Comisiones por Empleado (Mes Actual)</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={employeeStats}>

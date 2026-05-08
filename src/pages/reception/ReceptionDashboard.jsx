@@ -95,9 +95,9 @@ export const TurnosView = ({ isAdmin = false }) => {
   };
 
   const filteredAppointments = appointments.filter(app => {
-    // Reception: only today
+    // Reception: filter by selected date
     if (!isAdmin) {
-      if (app.date !== today) return false;
+      if (app.date !== filterDate) return false;
       if (searchTerm && !app.code.toLowerCase().includes(searchTerm.toLowerCase()) && !app.clientName.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       return true;
     } 
@@ -166,7 +166,7 @@ export const TurnosView = ({ isAdmin = false }) => {
       )}
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-2xl font-bold font-serif">{isAdmin ? "Historial de Turnos" : "Turnos de Hoy"}</h2>
+        <h2 className="text-2xl font-bold font-serif">{isAdmin ? "Historial de Turnos" : filterDate === today ? "Turnos de Hoy" : `Turnos del ${filterDate}`}</h2>
         
         {isAdmin ? (
           <div className="flex flex-wrap gap-2">
@@ -192,15 +192,23 @@ export const TurnosView = ({ isAdmin = false }) => {
             </select>
           </div>
         ) : (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="flex flex-wrap gap-2 items-center">
             <input 
-              type="text" 
-              placeholder="Buscar por cliente o código..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-gold bg-white" 
+              type="date" 
+              value={filterDate} 
+              onChange={(e) => setFilterDate(e.target.value)}
+              className="p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-gold bg-white text-sm" 
             />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Buscar por cliente o código..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-gold bg-white text-sm" 
+              />
+            </div>
           </div>
         )}
       </div>
@@ -265,9 +273,12 @@ export const TurnosView = ({ isAdmin = false }) => {
 };
 
 export const ProductosView = () => {
-  const { products, employees, sellProduct } = useContext(AppContext);
+  const { products, employees, sellProduct, addProduct } = useContext(AppContext);
   const [sellModal, setSellModal] = useState({ isOpen: false, productId: null, maxStock: 0, price: 0 });
   const [sellData, setSellData] = useState({ quantity: 1, paymentMethod: 'Efectivo', clientName: '', employeeId: '' });
+
+  const [createModal, setCreateModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: '', brand: '', price: '', stock: '', minStock: '' });
 
   const handleSellSubmit = (e) => {
     e.preventDefault();
@@ -277,13 +288,63 @@ export const ProductosView = () => {
     setSellModal({ isOpen: false, productId: null, maxStock: 0, price: 0 });
     setSellData({ quantity: 1, paymentMethod: 'Efectivo', clientName: '', employeeId: '' });
   };
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    addProduct({
+      name: newProduct.name,
+      brand: newProduct.brand,
+      price: parseFloat(newProduct.price) || 0,
+      stock: parseInt(newProduct.stock) || 0,
+      minStock: parseInt(newProduct.minStock) || 0
+    });
+    setCreateModal(false);
+    setNewProduct({ name: '', brand: '', price: '', stock: '', minStock: '' });
+  };
   
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold font-serif">Inventario de Productos</h2>
-        <button className="bg-brand-dark text-brand-beige px-4 py-2 rounded-lg font-bold hover:bg-black transition" onClick={() => alert('Abrir modal de nuevo producto (Mock)')}>+ Nuevo Producto</button>
+        <button className="bg-brand-dark text-brand-beige px-4 py-2 rounded-lg font-bold hover:bg-black transition" onClick={() => setCreateModal(true)}>+ Nuevo Producto</button>
       </div>
+
+      {/* Modal Nuevo Producto */}
+      {createModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+            <h3 className="text-xl font-bold font-serif mb-4">Añadir Nuevo Producto</h3>
+            <form onSubmit={handleCreateSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
+                <input type="text" required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Marca</label>
+                <input type="text" required value={newProduct.brand} onChange={e => setNewProduct({...newProduct, brand: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Precio de Venta ($)</label>
+                <input type="number" step="0.01" required min="0" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="flex gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Stock Inicial</label>
+                  <input type="number" required min="0" value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Stock Mínimo</label>
+                  <input type="number" required min="0" value={newProduct.minStock} onChange={e => setNewProduct({...newProduct, minStock: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setCreateModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600">Guardar Producto</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {sellModal.isOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -366,14 +427,74 @@ export const ProductosView = () => {
 };
 
 export const EmpleadosView = () => {
-  const { employees } = useContext(AppContext);
+  const { employees, addEmployee } = useContext(AppContext);
+  const [createModal, setCreateModal] = useState(false);
+  const [newEmployee, setNewEmployee] = useState({ name: '', lastName: '', role: '', photo: '', serviceCommissionRate: '', productCommissionRate: '' });
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    const defaultAvatar = `https://ui-avatars.com/api/?name=${newEmployee.name}+${newEmployee.lastName}&background=random`;
+    addEmployee({
+      name: newEmployee.name,
+      lastName: newEmployee.lastName,
+      role: newEmployee.role,
+      photo: newEmployee.photo || defaultAvatar,
+      serviceCommissionRate: (parseFloat(newEmployee.serviceCommissionRate) || 0) / 100,
+      productCommissionRate: (parseFloat(newEmployee.productCommissionRate) || 0) / 100
+    });
+    setCreateModal(false);
+    setNewEmployee({ name: '', lastName: '', role: '', photo: '', serviceCommissionRate: '', productCommissionRate: '' });
+  };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold font-serif">Gestión de Personal</h2>
-        <button className="bg-brand-dark text-brand-beige px-4 py-2 rounded-lg font-bold hover:bg-black transition" onClick={() => alert('Abrir modal de nuevo empleado (Mock)')}>+ Nuevo Empleado</button>
+        <button className="bg-brand-dark text-brand-beige px-4 py-2 rounded-lg font-bold hover:bg-black transition" onClick={() => setCreateModal(true)}>+ Nuevo Empleado</button>
       </div>
+
+      {/* Modal Nuevo Empleado */}
+      {createModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+            <h3 className="text-xl font-bold font-serif mb-4">Añadir Nuevo Empleado</h3>
+            <form onSubmit={handleCreateSubmit}>
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
+                  <input type="text" required value={newEmployee.name} onChange={e => setNewEmployee({...newEmployee, name: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Apellido</label>
+                  <input type="text" required value={newEmployee.lastName} onChange={e => setNewEmployee({...newEmployee, lastName: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Especialidad (Rol)</label>
+                <input type="text" required value={newEmployee.role} onChange={e => setNewEmployee({...newEmployee, role: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" placeholder="Ej: Barbero Senior" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Foto de Perfil (URL Opcional)</label>
+                <input type="url" value={newEmployee.photo} onChange={e => setNewEmployee({...newEmployee, photo: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" placeholder="https://..." />
+              </div>
+              <div className="flex gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Comisión Serv. (%)</label>
+                  <input type="number" required min="0" max="100" value={newEmployee.serviceCommissionRate} onChange={e => setNewEmployee({...newEmployee, serviceCommissionRate: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" placeholder="Ej: 50" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Comisión Prod. (%)</label>
+                  <input type="number" required min="0" max="100" value={newEmployee.productCommissionRate} onChange={e => setNewEmployee({...newEmployee, productCommissionRate: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" placeholder="Ej: 15" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setCreateModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600">Guardar Empleado</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {employees.map(emp => (
@@ -403,14 +524,61 @@ export const EmpleadosView = () => {
 };
 
 export const ServiciosView = () => {
-  const { services } = useContext(AppContext);
+  const { services, addService } = useContext(AppContext);
+  const [createModal, setCreateModal] = useState(false);
+  const [newService, setNewService] = useState({ name: '', description: '', duration: '', price: '' });
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    addService({
+      name: newService.name,
+      description: newService.description,
+      duration: parseInt(newService.duration) || 0,
+      price: parseFloat(newService.price) || 0
+    });
+    setCreateModal(false);
+    setNewService({ name: '', description: '', duration: '', price: '' });
+  };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold font-serif">Servicios Ofrecidos</h2>
-        <button className="bg-brand-dark text-brand-beige px-4 py-2 rounded-lg font-bold hover:bg-black transition" onClick={() => alert('Abrir modal de nuevo servicio (Mock)')}>+ Nuevo Servicio</button>
+        <button className="bg-brand-dark text-brand-beige px-4 py-2 rounded-lg font-bold hover:bg-black transition" onClick={() => setCreateModal(true)}>+ Nuevo Servicio</button>
       </div>
+
+      {/* Modal Nuevo Servicio */}
+      {createModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+            <h3 className="text-xl font-bold font-serif mb-4">Añadir Nuevo Servicio</h3>
+            <form onSubmit={handleCreateSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Nombre del Servicio</label>
+                <input type="text" required value={newService.name} onChange={e => setNewService({...newService, name: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Descripción Breve</label>
+                <input type="text" required value={newService.description} onChange={e => setNewService({...newService, description: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="flex gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Precio Base ($)</label>
+                  <input type="number" required min="0" step="0.01" value={newService.price} onChange={e => setNewService({...newService, price: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Duración (min)</label>
+                  <input type="number" required min="0" step="5" value={newService.duration} onChange={e => setNewService({...newService, duration: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setCreateModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600">Guardar Servicio</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {services.map(srv => (
