@@ -19,6 +19,10 @@ const ClientFlow = () => {
   });
   const [appointmentCode, setAppointmentCode] = useState(null);
   const [isSending, setIsSending] = useState(false);
+  
+  // PeluquerIA Match States
+  const [aiMatchStep, setAiMatchStep] = useState('idle'); // 'idle', 'uploading', 'scanning', 'result'
+  const [uploadedImage, setUploadedImage] = useState(null);
 
   // Load user from LocalStorage
   React.useEffect(() => {
@@ -62,6 +66,25 @@ const ClientFlow = () => {
   };
   
   const suggestedEmployee = getSuggestedProfessional();
+
+  const handleAiMatchUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUploadedImage(URL.createObjectURL(file));
+      setAiMatchStep('uploading');
+      setTimeout(() => {
+        setAiMatchStep('scanning');
+        setTimeout(() => {
+          setAiMatchStep('result');
+        }, 3000);
+      }, 500);
+    }
+  };
+
+  const resetAiMatch = () => {
+    setAiMatchStep('idle');
+    setUploadedImage(null);
+  };
 
   const handleServiceSelect = (id) => {
     setBookingData({ ...bookingData, serviceId: id });
@@ -167,6 +190,68 @@ const ClientFlow = () => {
       {step === 2 && (
         <div className="animate-fade-in">
           <h2 className="text-3xl font-bold mb-6 text-center">¿Qué servicio buscas hoy?</h2>
+
+          {/* PeluquerIA Match Feature */}
+          <div className="mb-8 p-1 rounded-2xl bg-gradient-to-r from-brand-gold via-yellow-400 to-brand-gold bg-[length:200%_auto] animate-gradient shadow-lg">
+            <div className="bg-white rounded-xl p-6 text-center">
+              <h3 className="text-2xl font-bold font-serif mb-2 flex items-center justify-center gap-2">
+                <span className="text-brand-gold">✨</span> PeluquerIA Match
+              </h3>
+              
+              {aiMatchStep === 'idle' && (
+                <>
+                  <p className="text-gray-600 mb-4">¿No sabes qué estilo elegir? Sube una foto tuya y nuestra Inteligencia Artificial te recomendará el mejor corte según la forma de tu rostro.</p>
+                  <label className="inline-block bg-brand-dark text-brand-beige px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors cursor-pointer">
+                    Subir mi foto
+                    <input type="file" accept="image/*" className="hidden" onChange={handleAiMatchUpload} />
+                  </label>
+                </>
+              )}
+
+              {(aiMatchStep === 'uploading' || aiMatchStep === 'scanning') && (
+                <div className="flex flex-col items-center">
+                  <p className="text-brand-gold font-bold mb-4 animate-pulse">Analizando facciones...</p>
+                  <div className="relative w-48 h-48 rounded-2xl overflow-hidden border-4 border-gray-100">
+                    <img src={uploadedImage} alt="Uploaded" className="w-full h-full object-cover" />
+                    {aiMatchStep === 'scanning' && (
+                      <div className="absolute top-0 left-0 w-full h-1 bg-brand-gold shadow-[0_0_15px_#D4AF37] animate-[scan_1.5s_ease-in-out_infinite_alternate]"></div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {aiMatchStep === 'result' && (
+                <div className="animate-fade-in">
+                  <div className="flex items-center justify-center gap-6 mb-4">
+                    <img src={uploadedImage} alt="Tu foto" className="w-24 h-24 rounded-full object-cover border-4 border-brand-gold" />
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Resultado del Análisis</p>
+                      <p className="text-xl font-bold">Rostro Ovalado / Diamante</p>
+                    </div>
+                  </div>
+                  <div className="bg-brand-light/30 p-4 rounded-xl border border-brand-gold/20 mb-6">
+                    <p className="font-medium text-brand-dark">La IA te recomienda: <span className="font-bold">{services[0]?.name || 'Corte Clásico'}</span></p>
+                    <p className="text-sm text-gray-600 mt-1">Este estilo equilibra las proporciones de tu rostro y resalta tus facciones naturales.</p>
+                  </div>
+                  <div className="flex gap-3 justify-center">
+                    <button onClick={resetAiMatch} className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold transition">
+                      Intentar con otra foto
+                    </button>
+                    <button onClick={() => handleServiceSelect(services[0]?.id)} className="px-6 py-2 bg-brand-gold text-white rounded-lg hover:bg-yellow-600 font-bold transition shadow-md">
+                      ¡Quiero este look!
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 mb-6">
+            <div className="h-px bg-gray-200 flex-1"></div>
+            <p className="text-gray-500 font-medium">O elige manualmente del catálogo</p>
+            <div className="h-px bg-gray-200 flex-1"></div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {services.map(service => (
               <div 
