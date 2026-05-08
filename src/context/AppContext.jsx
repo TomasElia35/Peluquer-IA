@@ -22,9 +22,14 @@ export const AppProvider = ({ children }) => {
     setAppointments([...appointments, { ...appointment, id: `a${Date.now()}` }]);
   };
 
-  const updateAppointmentStatus = (id, newStatus, finalAmount = null) => {
+  const updateAppointmentStatus = (id, newStatus, finalAmount = null, paymentMethod = null) => {
     setAppointments(appointments.map(app => 
-      app.id === id ? { ...app, status: newStatus, finalAmount: finalAmount !== null ? finalAmount : app.finalAmount } : app
+      app.id === id ? { 
+        ...app, 
+        status: newStatus, 
+        finalAmount: finalAmount !== null ? finalAmount : app.finalAmount,
+        paymentMethod: paymentMethod !== null ? paymentMethod : app.paymentMethod
+      } : app
     ));
   };
 

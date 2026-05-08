@@ -47,22 +47,34 @@ export const TurnosView = ({ isAdmin = false }) => {
   const [filterEmployee, setFilterEmployee] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Payment Modal State
+  const [paymentModal, setPaymentModal] = useState({ isOpen: false, appointmentId: null, suggestedAmount: 0 });
+  const [paymentData, setPaymentData] = useState({ amount: '', method: 'Efectivo' });
+
   const handleStatusChange = (id, currentStatus) => {
-    let newStatus = '';
-    let finalAmount = null;
-
-    if (currentStatus === 'Solicitado') newStatus = 'Aceptado';
-    else if (currentStatus === 'Aceptado') newStatus = 'En Proceso';
-    else if (currentStatus === 'En Proceso') {
-      newStatus = 'Finalizado';
-      const amountStr = prompt('Ingrese el monto final del trabajo:');
-      if (amountStr === null) return; // User cancelled
-      finalAmount = parseFloat(amountStr) || 0;
+    if (currentStatus === 'Solicitado') {
+      updateAppointmentStatus(id, 'Aceptado');
+    } else if (currentStatus === 'Aceptado' || currentStatus === 'En Proceso') {
+      const app = appointments.find(a => a.id === id);
+      const service = services.find(s => s.id === app?.serviceId);
+      const suggestedAmount = service ? service.price : 0;
+      
+      setPaymentData({ amount: suggestedAmount, method: 'Efectivo' });
+      setPaymentModal({ isOpen: true, appointmentId: id, suggestedAmount });
     }
+  };
 
-    if (newStatus) {
-      updateAppointmentStatus(id, newStatus, finalAmount);
+  const handlePaymentSubmit = (e) => {
+    e.preventDefault();
+    if (paymentModal.appointmentId) {
+      updateAppointmentStatus(
+        paymentModal.appointmentId, 
+        'Finalizado', 
+        parseFloat(paymentData.amount) || 0,
+        paymentData.method
+      );
     }
+    setPaymentModal({ isOpen: false, appointmentId: null, suggestedAmount: 0 });
   };
 
   const handleCancel = (id) => {
@@ -101,6 +113,58 @@ export const TurnosView = ({ isAdmin = false }) => {
 
   return (
     <div>
+      {/* Modal de Pago */}
+      {paymentModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+            <h3 className="text-xl font-bold font-serif mb-4">Finalizar Turno y Cobrar</h3>
+            <form onSubmit={handlePaymentSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Monto Final ($)</label>
+                <input 
+                  type="number" 
+                  required
+                  min="0"
+                  step="0.01"
+                  value={paymentData.amount}
+                  onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})}
+                  className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-gold bg-white"
+                />
+                <p className="text-xs text-gray-500 mt-1">Sugerido por el servicio: ${paymentModal.suggestedAmount}</p>
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Método de Pago</label>
+                <select 
+                  value={paymentData.method}
+                  onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}
+                  className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-gold bg-white"
+                >
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                  <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                  <option value="Transferencia/MercadoPago">Transferencia / MercadoPago</option>
+                </select>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button 
+                  type="button" 
+                  onClick={() => setPaymentModal({ isOpen: false, appointmentId: null, suggestedAmount: 0 })}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600 transition"
+                >
+                  Confirmar Cobro
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-2xl font-bold font-serif">{isAdmin ? "Historial de Turnos" : "Turnos de Hoy"}</h2>
         
@@ -178,7 +242,10 @@ export const TurnosView = ({ isAdmin = false }) => {
                       </>
                     )}
                     {app.status === 'Finalizado' && (
-                      <span className="text-sm font-bold text-green-700">${app.finalAmount}</span>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-green-700">${app.finalAmount}</span>
+                        {app.paymentMethod && <span className="text-xs text-gray-500">{app.paymentMethod}</span>}
+                      </div>
                     )}
                   </td>
                 </tr>

@@ -127,6 +127,7 @@
       "time": "16:00",
       "status": "Finalizado",
       "finalAmount": 22,
+      "paymentMethod": "Efectivo",
       "code": "TUR-P1K7"
     }
   ]
