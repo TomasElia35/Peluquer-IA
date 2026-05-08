@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { BarChart3, Calendar, Package, Users, Scissors, DollarSign, TrendingUp, Target } from 'lucide-react';
+import { BarChart3, Calendar, Package, Users, Scissors, DollarSign, TrendingUp, Target, Wallet } from 'lucide-react';
 import { TurnosView, ProductosView, EmpleadosView, ServiciosView } from '../reception/ReceptionDashboard';
 
 const AdminDashboard = () => {
@@ -43,40 +43,52 @@ const AdminDashboard = () => {
 
 // --- Statistics View ---
 const EstadisticasView = () => {
-  const { appointments, services, employees } = useContext(AppContext);
+  const { appointments, services, employees, productSales } = useContext(AppContext);
 
-  // Calculate Total Revenue
-  const totalRevenue = appointments
-    .filter(app => app.status === 'Finalizado')
-    .reduce((sum, app) => sum + (app.finalAmount || 0), 0);
+  // Revenue & Commissions
+  const finalizedAppointments = appointments.filter(app => app.status === 'Finalizado');
+  
+  const totalServiceRevenue = finalizedAppointments.reduce((sum, app) => sum + (app.finalAmount || 0), 0);
+  const totalProductRevenue = productSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+  const grossRevenue = totalServiceRevenue + totalProductRevenue;
 
-  // Most requested services
-  const serviceCounts = appointments.reduce((acc, app) => {
-    acc[app.serviceId] = (acc[app.serviceId] || 0) + 1;
-    return acc;
-  }, {});
+  // Commissions
+  const totalServiceCommissions = finalizedAppointments.reduce((sum, app) => {
+    const emp = employees.find(e => e.id === app.employeeId);
+    if (!emp) return sum;
+    return sum + (app.finalAmount || 0) * (emp.serviceCommissionRate || 0);
+  }, 0);
 
-  const serviceData = Object.keys(serviceCounts).map(serviceId => {
-    const service = services.find(s => s.id === serviceId);
+  const totalProductCommissions = productSales.reduce((sum, sale) => {
+    const emp = employees.find(e => e.id === sale.employeeId);
+    if (!emp) return sum;
+    return sum + (sale.totalAmount || 0) * (emp.productCommissionRate || 0);
+  }, 0);
+
+  const totalCommissions = totalServiceCommissions + totalProductCommissions;
+  const netProfit = grossRevenue - totalCommissions;
+
+  // Revenue Breakdown Data (Pie Chart)
+  const revenueBreakdownData = [
+    { name: 'Servicios', value: totalServiceRevenue },
+    { name: 'Productos', value: totalProductRevenue }
+  ];
+
+  // Employee Performance & Commission Data (Bar Chart)
+  const employeeStats = employees.map(emp => {
+    const empAppointments = finalizedAppointments.filter(app => app.employeeId === emp.id);
+    const empSales = productSales.filter(sale => sale.employeeId === emp.id);
+
+    const empServiceRev = empAppointments.reduce((sum, app) => sum + (app.finalAmount || 0), 0);
+    const empProductRev = empSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    
+    const empServiceComm = empServiceRev * (emp.serviceCommissionRate || 0);
+    const empProductComm = empProductRev * (emp.productCommissionRate || 0);
+
     return {
-      name: service ? service.name : 'Desconocido',
-      cantidad: serviceCounts[serviceId]
-    };
-  });
-
-  // Employee Performance
-  const employeeRevenue = appointments
-    .filter(app => app.status === 'Finalizado')
-    .reduce((acc, app) => {
-      acc[app.employeeId] = (acc[app.employeeId] || 0) + (app.finalAmount || 0);
-      return acc;
-    }, {});
-
-  const employeeData = Object.keys(employeeRevenue).map(empId => {
-    const employee = employees.find(e => e.id === empId);
-    return {
-      name: employee ? employee.name : 'Desconocido',
-      recaudacion: employeeRevenue[empId]
+      name: emp.name,
+      ingresos: empServiceRev + empProductRev,
+      comision: empServiceComm + empProductComm
     };
   });
 
@@ -87,38 +99,44 @@ const EstadisticasView = () => {
       <h2 className="text-3xl font-bold font-serif mb-8 text-brand-dark">Panel de Control General</h2>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <div className="glass p-6 rounded-2xl border-l-4 border-l-brand-gold flex items-center justify-between">
           <div>
-            <p className="text-gray-500 font-bold uppercase tracking-wide text-sm mb-1">Recaudación Total</p>
-            <h3 className="text-4xl font-bold text-brand-dark">${totalRevenue}</h3>
+            <p className="text-gray-500 font-bold uppercase tracking-wide text-xs mb-1">Recaudación Bruta</p>
+            <h3 className="text-3xl font-bold text-brand-dark">${grossRevenue.toFixed(2)}</h3>
           </div>
-          <div className="bg-brand-beige p-4 rounded-full">
+          <div className="bg-brand-beige p-3 rounded-full">
             <DollarSign size={24} className="text-brand-gold" />
+          </div>
+        </div>
+
+        <div className="glass p-6 rounded-2xl border-l-4 border-l-red-400 flex items-center justify-between">
+          <div>
+            <p className="text-gray-500 font-bold uppercase tracking-wide text-xs mb-1">Comisiones a Pagar</p>
+            <h3 className="text-3xl font-bold text-brand-dark">${totalCommissions.toFixed(2)}</h3>
+          </div>
+          <div className="bg-red-50 p-3 rounded-full">
+            <Users size={24} className="text-red-400" />
+          </div>
+        </div>
+
+        <div className="glass p-6 rounded-2xl border-l-4 border-l-green-500 flex items-center justify-between">
+          <div>
+            <p className="text-gray-500 font-bold uppercase tracking-wide text-xs mb-1">Ganancia Neta</p>
+            <h3 className="text-3xl font-bold text-green-700">${netProfit.toFixed(2)}</h3>
+          </div>
+          <div className="bg-green-50 p-3 rounded-full">
+            <Wallet size={24} className="text-green-500" />
           </div>
         </div>
 
         <div className="glass p-6 rounded-2xl border-l-4 border-l-brand-coffee flex items-center justify-between">
           <div>
-            <p className="text-gray-500 font-bold uppercase tracking-wide text-sm mb-1">Turnos Totales</p>
-            <h3 className="text-4xl font-bold text-brand-dark">{appointments.length}</h3>
+            <p className="text-gray-500 font-bold uppercase tracking-wide text-xs mb-1">Turnos Finalizados</p>
+            <h3 className="text-3xl font-bold text-brand-dark">{finalizedAppointments.length}</h3>
           </div>
-          <div className="bg-brand-beige p-4 rounded-full">
+          <div className="bg-brand-beige p-3 rounded-full">
             <TrendingUp size={24} className="text-brand-coffee" />
-          </div>
-        </div>
-
-        <div className="glass p-6 rounded-2xl border-l-4 border-l-brand-dark flex items-center justify-between">
-          <div>
-            <p className="text-gray-500 font-bold uppercase tracking-wide text-sm mb-1">Tasa de Finalización</p>
-            <h3 className="text-4xl font-bold text-brand-dark">
-              {appointments.length > 0 
-                ? Math.round((appointments.filter(a => a.status === 'Finalizado').length / appointments.length) * 100) 
-                : 0}%
-            </h3>
-          </div>
-          <div className="bg-brand-beige p-4 rounded-full">
-            <Target size={24} className="text-brand-dark" />
           </div>
         </div>
       </div>
@@ -126,24 +144,24 @@ const EstadisticasView = () => {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="glass p-6 rounded-2xl">
-          <h3 className="text-xl font-bold mb-6 text-center">Servicios Más Pedidos</h3>
+          <h3 className="text-xl font-bold mb-6 text-center">Ingresos: Servicios vs Productos</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={serviceData}
+                  data={revenueBreakdownData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={5}
-                  dataKey="cantidad"
+                  dataKey="value"
                 >
-                  {serviceData.map((entry, index) => (
+                  {revenueBreakdownData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <RechartsTooltip />
+                <RechartsTooltip formatter={(value) => `$${value}`} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -151,15 +169,17 @@ const EstadisticasView = () => {
         </div>
 
         <div className="glass p-6 rounded-2xl">
-          <h3 className="text-xl font-bold mb-6 text-center">Recaudación por Profesional</h3>
+          <h3 className="text-xl font-bold mb-6 text-center">Rendimiento y Comisiones por Empleado</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={employeeData}>
+              <BarChart data={employeeStats}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
-                <RechartsTooltip cursor={{fill: '#F5F5DC'}} />
-                <Bar dataKey="recaudacion" fill="#D4AF37" radius={[4, 4, 0, 0]} />
+                <RechartsTooltip cursor={{fill: '#F5F5DC'}} formatter={(value) => `$${value.toFixed(2)}`} />
+                <Legend />
+                <Bar dataKey="ingresos" name="Ingresos Generados" fill="#D4AF37" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="comision" name="Comisión a Pagar" fill="#6F4E37" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

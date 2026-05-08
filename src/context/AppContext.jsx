@@ -8,6 +8,7 @@ export const AppProvider = ({ children }) => {
   const [employees, setEmployees] = useState([]);
   const [products, setProducts] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [productSales, setProductSales] = useState([]);
 
   useEffect(() => {
     // Load initial mock data
@@ -15,6 +16,7 @@ export const AppProvider = ({ children }) => {
     setEmployees(initialData.employees);
     setProducts(initialData.products);
     setAppointments(initialData.appointments);
+    setProductSales(initialData.productSales || []);
   }, []);
 
   // CRUD Operations for Appointments
@@ -46,6 +48,33 @@ export const AppProvider = ({ children }) => {
     setProducts(products.filter(p => p.id !== id));
   };
 
+  // Sell Product Function
+  const sellProduct = (productId, quantity, paymentMethod, clientName, employeeId) => {
+    // Reduce stock
+    setProducts(products.map(p => 
+      p.id === productId ? { ...p, stock: Math.max(0, p.stock - quantity) } : p
+    ));
+
+    // Calculate total amount based on current price
+    const product = products.find(p => p.id === productId);
+    const totalAmount = (product ? product.price : 0) * quantity;
+
+    // Register sale
+    const todayDate = new Date();
+    const today = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-' + String(todayDate.getDate()).padStart(2, '0');
+    
+    setProductSales([...productSales, {
+      id: `sale${Date.now()}`,
+      productId,
+      quantity,
+      totalAmount,
+      paymentMethod,
+      clientName,
+      employeeId,
+      date: today
+    }]);
+  };
+
   // CRUD for Employees
   const addEmployee = (employee) => {
     setEmployees([...employees, { ...employee, id: `e${Date.now()}` }]);
@@ -74,9 +103,9 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      services, employees, products, appointments,
+      services, employees, products, appointments, productSales,
       addAppointment, updateAppointmentStatus,
-      addProduct, updateProduct, deleteProduct,
+      addProduct, updateProduct, deleteProduct, sellProduct,
       addEmployee, updateEmployee, deleteEmployee,
       addService, updateService, deleteService
     }}>

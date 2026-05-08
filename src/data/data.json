@@ -35,21 +35,27 @@
       "name": "Carlos",
       "lastName": "Gómez",
       "photo": "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80",
-      "role": "Estilista Senior"
+      "role": "Estilista Senior",
+      "serviceCommissionRate": 0.5,
+      "productCommissionRate": 0.1
     },
     {
       "id": "e2",
       "name": "Ana",
       "lastName": "Martínez",
       "photo": "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80",
-      "role": "Colorista"
+      "role": "Colorista",
+      "serviceCommissionRate": 0.45,
+      "productCommissionRate": 0.15
     },
     {
       "id": "e3",
       "name": "Javier",
       "lastName": "López",
       "photo": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80",
-      "role": "Barbero"
+      "role": "Barbero",
+      "serviceCommissionRate": 0.5,
+      "productCommissionRate": 0.1
     }
   ],
   "products": [
@@ -130,5 +136,6 @@
       "paymentMethod": "Efectivo",
       "code": "TUR-P1K7"
     }
-  ]
+  ],
+  "productSales": []
 }

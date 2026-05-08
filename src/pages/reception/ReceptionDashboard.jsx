@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
-import { Calendar, Package, Users, Scissors, Search, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Package, Users, Scissors, Search, Edit2, Trash2, CheckCircle, XCircle, ShoppingCart } from 'lucide-react';
 
 const ReceptionDashboard = () => {
   const [activeTab, setActiveTab] = useState('turnos');
@@ -265,7 +265,18 @@ export const TurnosView = ({ isAdmin = false }) => {
 };
 
 export const ProductosView = () => {
-  const { products, addProduct } = useContext(AppContext);
+  const { products, employees, sellProduct } = useContext(AppContext);
+  const [sellModal, setSellModal] = useState({ isOpen: false, productId: null, maxStock: 0, price: 0 });
+  const [sellData, setSellData] = useState({ quantity: 1, paymentMethod: 'Efectivo', clientName: '', employeeId: '' });
+
+  const handleSellSubmit = (e) => {
+    e.preventDefault();
+    if (sellModal.productId && sellData.employeeId) {
+      sellProduct(sellModal.productId, parseInt(sellData.quantity), sellData.paymentMethod, sellData.clientName, sellData.employeeId);
+    }
+    setSellModal({ isOpen: false, productId: null, maxStock: 0, price: 0 });
+    setSellData({ quantity: 1, paymentMethod: 'Efectivo', clientName: '', employeeId: '' });
+  };
   
   return (
     <div>
@@ -273,6 +284,54 @@ export const ProductosView = () => {
         <h2 className="text-2xl font-bold font-serif">Inventario de Productos</h2>
         <button className="bg-brand-dark text-brand-beige px-4 py-2 rounded-lg font-bold hover:bg-black transition" onClick={() => alert('Abrir modal de nuevo producto (Mock)')}>+ Nuevo Producto</button>
       </div>
+
+      {sellModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+            <h3 className="text-xl font-bold font-serif mb-4">Vender Producto</h3>
+            <form onSubmit={handleSellSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Cliente</label>
+                <input 
+                  type="text" required placeholder="Nombre del cliente"
+                  value={sellData.clientName} onChange={e => setSellData({...sellData, clientName: e.target.value})}
+                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Profesional (Comisión)</label>
+                <select required value={sellData.employeeId} onChange={e => setSellData({...sellData, employeeId: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none">
+                  <option value="">Seleccione...</option>
+                  {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name} {emp.lastName}</option>)}
+                </select>
+              </div>
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Cant. (Max: {sellModal.maxStock})</label>
+                  <input type="number" required min="1" max={sellModal.maxStock} value={sellData.quantity} onChange={e => setSellData({...sellData, quantity: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Total</label>
+                  <div className="p-2 bg-gray-100 rounded-lg font-bold">${(sellData.quantity * sellModal.price).toFixed(2)}</div>
+                </div>
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Método de Pago</label>
+                <select value={sellData.paymentMethod} onChange={e => setSellData({...sellData, paymentMethod: e.target.value})} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none">
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                  <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                  <option value="Transferencia/MercadoPago">Transferencia / MercadoPago</option>
+                </select>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setSellModal({ isOpen: false, productId: null, maxStock: 0, price: 0 })} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600">Confirmar Venta</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map(product => (
@@ -290,8 +349,13 @@ export const ProductosView = () => {
                 Stock: {product.stock} (Min: {product.minStock})
               </span>
               <div className="flex gap-2">
-                <button className="text-brand-coffee hover:text-brand-dark"><Edit2 size={16}/></button>
-                <button className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+                {product.stock > 0 && (
+                  <button onClick={() => setSellModal({ isOpen: true, productId: product.id, maxStock: product.stock, price: product.price })} className="text-brand-gold hover:text-yellow-600 mr-2" title="Vender">
+                    <ShoppingCart size={16}/>
+                  </button>
+                )}
+                <button className="text-brand-coffee hover:text-brand-dark" title="Editar"><Edit2 size={16}/></button>
+                <button className="text-red-500 hover:text-red-700" title="Eliminar"><Trash2 size={16}/></button>
               </div>
             </div>
           </div>
@@ -320,7 +384,17 @@ export const EmpleadosView = () => {
             </div>
             <img src={emp.photo} alt={emp.name} className="w-20 h-20 rounded-full mx-auto object-cover mb-4 shadow-md" />
             <h3 className="font-bold text-xl">{emp.name} {emp.lastName}</h3>
-            <p className="text-brand-gold font-medium">{emp.role}</p>
+            <p className="text-brand-gold font-medium mb-3">{emp.role}</p>
+            <div className="bg-brand-light/30 rounded-lg p-3 text-sm text-left">
+              <p className="flex justify-between border-b pb-1 mb-1 border-gray-200">
+                <span className="text-gray-600">Comisión Servicios:</span>
+                <span className="font-bold">{(emp.serviceCommissionRate * 100).toFixed(0)}%</span>
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-600">Comisión Productos:</span>
+                <span className="font-bold">{(emp.productCommissionRate * 100).toFixed(0)}%</span>
+              </p>
+            </div>
           </div>
         ))}
       </div>
