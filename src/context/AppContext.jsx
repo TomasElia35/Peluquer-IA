@@ -9,6 +9,7 @@ export const AppProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [productSales, setProductSales] = useState([]);
+  const [employeePayments, setEmployeePayments] = useState([]);
 
   useEffect(() => {
     // Load initial mock data
@@ -17,6 +18,7 @@ export const AppProvider = ({ children }) => {
     setProducts(initialData.products);
     setAppointments(initialData.appointments);
     setProductSales(initialData.productSales || []);
+    setEmployeePayments(initialData.employeePayments || []);
   }, []);
 
   // CRUD Operations for Appointments
@@ -88,6 +90,18 @@ export const AppProvider = ({ children }) => {
     setEmployees(employees.filter(e => e.id !== id));
   };
 
+  // Pay Employee Function
+  const payEmployee = (workDate, employeeId, amount, paymentMethod) => {
+    setEmployeePayments([...employeePayments, {
+      id: `pay${Date.now()}`,
+      workDate,
+      employeeId,
+      amount,
+      paymentMethod,
+      paidAt: new Date().toISOString()
+    }]);
+  };
+
   // CRUD for Services
   const addService = (service) => {
     setServices([...services, { ...service, id: `s${Date.now()}` }]);
@@ -103,10 +117,10 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      services, employees, products, appointments, productSales,
+      services, employees, products, appointments, productSales, employeePayments,
       addAppointment, updateAppointmentStatus,
       addProduct, updateProduct, deleteProduct, sellProduct,
-      addEmployee, updateEmployee, deleteEmployee,
+      addEmployee, updateEmployee, deleteEmployee, payEmployee,
       addService, updateService, deleteService
     }}>
       {children}
