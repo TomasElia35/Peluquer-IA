@@ -281,6 +281,7 @@ export const ProductosView = () => {
   const [newProduct, setNewProduct] = useState({ name: '', brand: '', price: '', stock: '', minStock: '' });
 
   const [editModal, setEditModal] = useState({ isOpen: false, product: null });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
 
   const handleSellSubmit = (e) => {
     e.preventDefault();
@@ -315,9 +316,10 @@ export const ProductosView = () => {
     setEditModal({ isOpen: false, product: null });
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('¿Seguro que deseas eliminar este producto?')) {
-      deleteProduct(id);
+  const confirmDelete = () => {
+    if (deleteModal.id) {
+      deleteProduct(deleteModal.id);
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
   
@@ -402,6 +404,20 @@ export const ProductosView = () => {
         </div>
       )}
 
+      {/* Modal Confirmar Eliminación */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl animate-fade-in text-center">
+            <h3 className="text-xl font-bold font-serif mb-2">Eliminar Producto</h3>
+            <p className="text-gray-600 mb-6">¿Estás seguro que deseas eliminar este producto? Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setDeleteModal({ isOpen: false, id: null })} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+              <button onClick={confirmDelete} className="px-4 py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {sellModal.isOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
@@ -472,7 +488,7 @@ export const ProductosView = () => {
                   </button>
                 )}
                 <button onClick={() => setEditModal({ isOpen: true, product: { ...product } })} className="text-brand-coffee hover:text-brand-dark" title="Editar"><Edit2 size={16}/></button>
-                <button onClick={() => handleDelete(product.id)} className="text-red-500 hover:text-red-700" title="Eliminar"><Trash2 size={16}/></button>
+                <button onClick={() => setDeleteModal({ isOpen: true, id: product.id })} className="text-red-500 hover:text-red-700" title="Eliminar"><Trash2 size={16}/></button>
               </div>
             </div>
           </div>
@@ -488,6 +504,7 @@ export const EmpleadosView = () => {
   const [newEmployee, setNewEmployee] = useState({ name: '', lastName: '', role: '', photo: '', serviceCommissionRate: '', productCommissionRate: '' });
 
   const [editModal, setEditModal] = useState({ isOpen: false, employee: null });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
@@ -516,9 +533,10 @@ export const EmpleadosView = () => {
     setEditModal({ isOpen: false, employee: null });
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('¿Seguro que deseas eliminar este empleado?')) {
-      deleteEmployee(id);
+  const confirmDelete = () => {
+    if (deleteModal.id) {
+      deleteEmployee(deleteModal.id);
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -615,12 +633,26 @@ export const EmpleadosView = () => {
         </div>
       )}
 
+      {/* Modal Confirmar Eliminación */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl animate-fade-in text-center">
+            <h3 className="text-xl font-bold font-serif mb-2">Eliminar Empleado</h3>
+            <p className="text-gray-600 mb-6">¿Estás seguro que deseas eliminar a este empleado? Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setDeleteModal({ isOpen: false, id: null })} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+              <button onClick={confirmDelete} className="px-4 py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {employees.map(emp => (
           <div key={emp.id} className="bg-white p-6 rounded-xl shadow-sm text-center relative group">
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={() => setEditModal({ isOpen: true, employee: { ...emp, serviceCommissionRate: (emp.serviceCommissionRate || 0) * 100, productCommissionRate: (emp.productCommissionRate || 0) * 100 } })} className="text-brand-coffee hover:text-brand-dark"><Edit2 size={16}/></button>
-              <button onClick={() => handleDelete(emp.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+              <button onClick={() => setDeleteModal({ isOpen: true, id: emp.id })} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
             </div>
             <img src={emp.photo} alt={emp.name} className="w-20 h-20 rounded-full mx-auto object-cover mb-4 shadow-md" />
             <h3 className="font-bold text-xl">{emp.name} {emp.lastName}</h3>
@@ -648,6 +680,7 @@ export const ServiciosView = () => {
   const [newService, setNewService] = useState({ name: '', description: '', duration: '', price: '' });
 
   const [editModal, setEditModal] = useState({ isOpen: false, service: null });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
@@ -671,9 +704,10 @@ export const ServiciosView = () => {
     setEditModal({ isOpen: false, service: null });
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('¿Seguro que deseas eliminar este servicio?')) {
-      deleteService(id);
+  const confirmDelete = () => {
+    if (deleteModal.id) {
+      deleteService(deleteModal.id);
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -750,6 +784,20 @@ export const ServiciosView = () => {
         </div>
       )}
 
+      {/* Modal Confirmar Eliminación */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl animate-fade-in text-center">
+            <h3 className="text-xl font-bold font-serif mb-2">Eliminar Servicio</h3>
+            <p className="text-gray-600 mb-6">¿Estás seguro que deseas eliminar este servicio? Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setDeleteModal({ isOpen: false, id: null })} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+              <button onClick={confirmDelete} className="px-4 py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {services.map(srv => (
           <div key={srv.id} className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center">
@@ -762,7 +810,7 @@ export const ServiciosView = () => {
               <span className="text-xl font-bold text-brand-gold">${srv.price}</span>
               <div className="flex gap-2">
                 <button onClick={() => setEditModal({ isOpen: true, service: { ...srv } })} className="text-brand-coffee hover:text-brand-dark"><Edit2 size={16}/></button>
-                <button onClick={() => handleDelete(srv.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+                <button onClick={() => setDeleteModal({ isOpen: true, id: srv.id })} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
               </div>
             </div>
           </div>
