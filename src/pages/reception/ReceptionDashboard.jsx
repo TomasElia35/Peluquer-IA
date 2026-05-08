@@ -273,12 +273,14 @@ export const TurnosView = ({ isAdmin = false }) => {
 };
 
 export const ProductosView = () => {
-  const { products, employees, sellProduct, addProduct } = useContext(AppContext);
+  const { products, employees, sellProduct, addProduct, updateProduct, deleteProduct } = useContext(AppContext);
   const [sellModal, setSellModal] = useState({ isOpen: false, productId: null, maxStock: 0, price: 0 });
   const [sellData, setSellData] = useState({ quantity: 1, paymentMethod: 'Efectivo', clientName: '', employeeId: '' });
 
   const [createModal, setCreateModal] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', brand: '', price: '', stock: '', minStock: '' });
+
+  const [editModal, setEditModal] = useState({ isOpen: false, product: null });
 
   const handleSellSubmit = (e) => {
     e.preventDefault();
@@ -300,6 +302,23 @@ export const ProductosView = () => {
     });
     setCreateModal(false);
     setNewProduct({ name: '', brand: '', price: '', stock: '', minStock: '' });
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    updateProduct(editModal.product.id, {
+      ...editModal.product,
+      price: parseFloat(editModal.product.price) || 0,
+      stock: parseInt(editModal.product.stock) || 0,
+      minStock: parseInt(editModal.product.minStock) || 0
+    });
+    setEditModal({ isOpen: false, product: null });
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('¿Seguro que deseas eliminar este producto?')) {
+      deleteProduct(id);
+    }
   };
   
   return (
@@ -340,6 +359,43 @@ export const ProductosView = () => {
               <div className="flex gap-3 justify-end">
                 <button type="button" onClick={() => setCreateModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600">Guardar Producto</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Producto */}
+      {editModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+            <h3 className="text-xl font-bold font-serif mb-4">Editar Producto</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
+                <input type="text" required value={editModal.product.name} onChange={e => setEditModal({ ...editModal, product: { ...editModal.product, name: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Marca</label>
+                <input type="text" required value={editModal.product.brand} onChange={e => setEditModal({ ...editModal, product: { ...editModal.product, brand: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Precio de Venta ($)</label>
+                <input type="number" step="0.01" required min="0" value={editModal.product.price} onChange={e => setEditModal({ ...editModal, product: { ...editModal.product, price: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="flex gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Stock Inicial</label>
+                  <input type="number" required min="0" value={editModal.product.stock} onChange={e => setEditModal({ ...editModal, product: { ...editModal.product, stock: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Stock Mínimo</label>
+                  <input type="number" required min="0" value={editModal.product.minStock} onChange={e => setEditModal({ ...editModal, product: { ...editModal.product, minStock: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setEditModal({ isOpen: false, product: null })} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600">Guardar Cambios</button>
               </div>
             </form>
           </div>
@@ -415,8 +471,8 @@ export const ProductosView = () => {
                     <ShoppingCart size={16}/>
                   </button>
                 )}
-                <button className="text-brand-coffee hover:text-brand-dark" title="Editar"><Edit2 size={16}/></button>
-                <button className="text-red-500 hover:text-red-700" title="Eliminar"><Trash2 size={16}/></button>
+                <button onClick={() => setEditModal({ isOpen: true, product: { ...product } })} className="text-brand-coffee hover:text-brand-dark" title="Editar"><Edit2 size={16}/></button>
+                <button onClick={() => handleDelete(product.id)} className="text-red-500 hover:text-red-700" title="Eliminar"><Trash2 size={16}/></button>
               </div>
             </div>
           </div>
@@ -427,9 +483,11 @@ export const ProductosView = () => {
 };
 
 export const EmpleadosView = () => {
-  const { employees, addEmployee } = useContext(AppContext);
+  const { employees, addEmployee, updateEmployee, deleteEmployee } = useContext(AppContext);
   const [createModal, setCreateModal] = useState(false);
   const [newEmployee, setNewEmployee] = useState({ name: '', lastName: '', role: '', photo: '', serviceCommissionRate: '', productCommissionRate: '' });
+
+  const [editModal, setEditModal] = useState({ isOpen: false, employee: null });
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
@@ -444,6 +502,24 @@ export const EmpleadosView = () => {
     });
     setCreateModal(false);
     setNewEmployee({ name: '', lastName: '', role: '', photo: '', serviceCommissionRate: '', productCommissionRate: '' });
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    const defaultAvatar = `https://ui-avatars.com/api/?name=${editModal.employee.name}+${editModal.employee.lastName}&background=random`;
+    updateEmployee(editModal.employee.id, {
+      ...editModal.employee,
+      photo: editModal.employee.photo || defaultAvatar,
+      serviceCommissionRate: (parseFloat(editModal.employee.serviceCommissionRate) || 0) / 100,
+      productCommissionRate: (parseFloat(editModal.employee.productCommissionRate) || 0) / 100
+    });
+    setEditModal({ isOpen: false, employee: null });
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('¿Seguro que deseas eliminar este empleado?')) {
+      deleteEmployee(id);
+    }
   };
 
   return (
@@ -496,12 +572,55 @@ export const EmpleadosView = () => {
         </div>
       )}
 
+      {/* Modal Editar Empleado */}
+      {editModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+            <h3 className="text-xl font-bold font-serif mb-4">Editar Empleado</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
+                  <input type="text" required value={editModal.employee.name} onChange={e => setEditModal({ ...editModal, employee: { ...editModal.employee, name: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Apellido</label>
+                  <input type="text" required value={editModal.employee.lastName} onChange={e => setEditModal({ ...editModal, employee: { ...editModal.employee, lastName: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Especialidad (Rol)</label>
+                <input type="text" required value={editModal.employee.role} onChange={e => setEditModal({ ...editModal, employee: { ...editModal.employee, role: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Foto de Perfil (URL Opcional)</label>
+                <input type="url" value={editModal.employee.photo} onChange={e => setEditModal({ ...editModal, employee: { ...editModal.employee, photo: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="flex gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Comisión Serv. (%)</label>
+                  <input type="number" required min="0" max="100" value={editModal.employee.serviceCommissionRate} onChange={e => setEditModal({ ...editModal, employee: { ...editModal.employee, serviceCommissionRate: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Comisión Prod. (%)</label>
+                  <input type="number" required min="0" max="100" value={editModal.employee.productCommissionRate} onChange={e => setEditModal({ ...editModal, employee: { ...editModal.employee, productCommissionRate: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setEditModal({ isOpen: false, employee: null })} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600">Guardar Cambios</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {employees.map(emp => (
           <div key={emp.id} className="bg-white p-6 rounded-xl shadow-sm text-center relative group">
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="text-brand-coffee hover:text-brand-dark"><Edit2 size={16}/></button>
-              <button className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+              <button onClick={() => setEditModal({ isOpen: true, employee: { ...emp, serviceCommissionRate: (emp.serviceCommissionRate || 0) * 100, productCommissionRate: (emp.productCommissionRate || 0) * 100 } })} className="text-brand-coffee hover:text-brand-dark"><Edit2 size={16}/></button>
+              <button onClick={() => handleDelete(emp.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
             </div>
             <img src={emp.photo} alt={emp.name} className="w-20 h-20 rounded-full mx-auto object-cover mb-4 shadow-md" />
             <h3 className="font-bold text-xl">{emp.name} {emp.lastName}</h3>
@@ -524,9 +643,11 @@ export const EmpleadosView = () => {
 };
 
 export const ServiciosView = () => {
-  const { services, addService } = useContext(AppContext);
+  const { services, addService, updateService, deleteService } = useContext(AppContext);
   const [createModal, setCreateModal] = useState(false);
   const [newService, setNewService] = useState({ name: '', description: '', duration: '', price: '' });
+
+  const [editModal, setEditModal] = useState({ isOpen: false, service: null });
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
@@ -538,6 +659,22 @@ export const ServiciosView = () => {
     });
     setCreateModal(false);
     setNewService({ name: '', description: '', duration: '', price: '' });
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    updateService(editModal.service.id, {
+      ...editModal.service,
+      duration: parseInt(editModal.service.duration) || 0,
+      price: parseFloat(editModal.service.price) || 0
+    });
+    setEditModal({ isOpen: false, service: null });
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('¿Seguro que deseas eliminar este servicio?')) {
+      deleteService(id);
+    }
   };
 
   return (
@@ -580,6 +717,39 @@ export const ServiciosView = () => {
         </div>
       )}
 
+      {/* Modal Editar Servicio */}
+      {editModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+            <h3 className="text-xl font-bold font-serif mb-4">Editar Servicio</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Nombre del Servicio</label>
+                <input type="text" required value={editModal.service.name} onChange={e => setEditModal({ ...editModal, service: { ...editModal.service, name: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Descripción Breve</label>
+                <input type="text" required value={editModal.service.description} onChange={e => setEditModal({ ...editModal, service: { ...editModal.service, description: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+              </div>
+              <div className="flex gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Precio Base ($)</label>
+                  <input type="number" required min="0" step="0.01" value={editModal.service.price} onChange={e => setEditModal({ ...editModal, service: { ...editModal.service, price: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Duración (min)</label>
+                  <input type="number" required min="0" step="5" value={editModal.service.duration} onChange={e => setEditModal({ ...editModal, service: { ...editModal.service, duration: e.target.value } })} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-brand-gold outline-none" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setEditModal({ isOpen: false, service: null })} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-brand-gold text-white font-bold rounded-lg hover:bg-yellow-600">Guardar Cambios</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {services.map(srv => (
           <div key={srv.id} className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center">
@@ -591,8 +761,8 @@ export const ServiciosView = () => {
             <div className="flex flex-col items-end gap-3">
               <span className="text-xl font-bold text-brand-gold">${srv.price}</span>
               <div className="flex gap-2">
-                <button className="text-brand-coffee hover:text-brand-dark"><Edit2 size={16}/></button>
-                <button className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+                <button onClick={() => setEditModal({ isOpen: true, service: { ...srv } })} className="text-brand-coffee hover:text-brand-dark"><Edit2 size={16}/></button>
+                <button onClick={() => handleDelete(srv.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
               </div>
             </div>
           </div>
